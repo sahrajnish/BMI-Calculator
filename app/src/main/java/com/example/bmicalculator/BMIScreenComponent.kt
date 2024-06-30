@@ -257,22 +257,19 @@ fun BMIResultCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceAround
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
                 text = "Underweight",
-                color = CustomBlue,
-                fontSize = 18.sp
+                color = CustomBlue
             )
             Text(
                 text = "Normal",
-                color = CustomGreen,
-                fontSize = 18.sp
+                color = CustomGreen
             )
             Text(
                 text = "Overweight",
-                color = CustomRed,
-                fontSize = 18.sp
+                color = CustomRed
             )
         }
 
@@ -339,7 +336,7 @@ fun ShareButton(
     onClick: () -> Unit
 ) {
     Button(
-        modifier = Modifier,
+        modifier = Modifier.fillMaxWidth(),
         onClick = onClick,
         colors = ButtonDefaults.buttonColors(
             contentColor = Color.White,
@@ -401,5 +398,7 @@ fun BottomSheetContent(
 @Preview(showBackground = true)
 @Composable
 private fun Prev() {
-    BMIResultCard(bmi = 24.5, bmiStage = "Normal", bmiStageColor = CustomGreen)
+    ShareButton {
+
+    }
 }

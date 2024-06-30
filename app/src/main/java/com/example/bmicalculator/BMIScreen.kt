@@ -1,5 +1,7 @@
 package com.example.bmicalculator
 
+import android.content.Intent
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Divider
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
@@ -24,13 +27,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.bmicalculator.ui.theme.CustomBlue
+import com.example.bmicalculator.ui.theme.CustomGreen
 import com.example.bmicalculator.ui.theme.CustomOrange
+import com.example.bmicalculator.ui.theme.CustomRed
 import com.example.bmicalculator.ui.theme.GrayBackground
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -39,6 +47,19 @@ fun BMIScreen(
     viewModal: BMIScreenViewModal
 ) {
     val state = viewModal.state
+    val context = LocalContext.current
+
+    val sendIntent = Intent().apply {
+        action = Intent.ACTION_SEND
+        putExtra(
+            Intent.EXTRA_TEXT,
+            "Hey Guys! Checkout my Body Mass Index: ${state.bmi} BMI. " +
+                    "Which is considered ${state.bmiStage}"
+        )
+        type = "text/plain"
+    }
+
+    val shareIntent = Intent.createChooser(sendIntent, null)
 
     var openBottomSheet by remember { mutableStateOf(false) }
 
@@ -51,6 +72,27 @@ fun BMIScreen(
         onHeightClicked = {
             viewModal.onAction(UserAction.heightTextClicked)
             openBottomSheet = true
+        },
+        onNumberClicked = {
+            viewModal.onAction(UserAction.OnNumberClicked(it))
+        },
+        onWeightValueClicked = {
+            viewModal.onAction(UserAction.WeightValueClicked)
+        },
+        onHeightValueClicked = {
+            viewModal.onAction(UserAction.HeightValueClicked)
+        },
+        allClearButtonClicked = {
+            viewModal.onAction(UserAction.AllClearButtonClicked)
+        },
+        deleteButtonClicked = {
+            viewModal.onAction(UserAction.DeleteButtonClicked)
+        },
+        goButtonClicked = {
+            viewModal.onAction(UserAction.GoButtonClicked(context))
+        },
+        shareButtonClicked = {
+            context.startActivity(shareIntent)
         }
     )
 
@@ -77,7 +119,14 @@ fun BMIScreen(
 fun ScreenContent(
     uiBMIState: BMIState,
     onWeightClicked: () -> Unit,
-    onHeightClicked: () -> Unit
+    onHeightClicked: () -> Unit,
+    onHeightValueClicked: () -> Unit,
+    onWeightValueClicked: () -> Unit,
+    onNumberClicked: (String) -> Unit,
+    allClearButtonClicked: () -> Unit,
+    deleteButtonClicked: () -> Unit,
+    goButtonClicked: () -> Unit,
+    shareButtonClicked: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -91,7 +140,9 @@ fun ScreenContent(
                 .fillMaxWidth()
         ) {
             Text(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 30.dp),
                 text = "BMI Calculator",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
@@ -112,10 +163,12 @@ fun ScreenContent(
                     onClick = onWeightClicked
                 )
                 InputUnitValue(
-                    inputValue = "60",
+                    inputValue = uiBMIState.weightValue,
                     inputUnit = uiBMIState.weightUnit,
-                    inputColor = CustomOrange,
-                    onUnitValueClicked = {}
+                    inputColor = if (uiBMIState.weightValueStage != WeightValueStage.INACTIVE) {
+                        CustomOrange
+                    } else Color.Black,
+                    onUnitValueClicked = onWeightValueClicked
                 )
 
             }
@@ -134,10 +187,12 @@ fun ScreenContent(
                     onClick = onHeightClicked
                 )
                 InputUnitValue(
-                    inputValue = "170",
+                    inputValue = uiBMIState.heightValue,
                     inputUnit = uiBMIState.heightUnit,
-                    inputColor = CustomOrange,
-                    onUnitValueClicked = {}
+                    inputColor = if (uiBMIState.heightValueStage != HeightValueStage.INACTIVE) {
+                        CustomOrange
+                    } else Color.Black,
+                    onUnitValueClicked = onHeightValueClicked
                 )
             }
         }
@@ -147,29 +202,49 @@ fun ScreenContent(
                 .fillMaxWidth()
                 .aspectRatio(1f)
         ) {
-            Divider()
-            Spacer(modifier = Modifier.height(20.dp))
-            Row(
-                modifier = Modifier
-            ) {
-                NumberKeyboard(
-                    modifier = Modifier,
-                    onNumberClick = {}
-                )
-                Column(
-                    modifier = Modifier
-                ) {
-                    SymbolButton(
-                        symbol = "AC",
-                        onClick = {}
-                    )
-                    SymbolButtonWithIcon(
-                        onClick = {}
-                    )
-                    SymbolButton(
-                        symbol = "GO",
-                        onClick = {}
-                    )
+            Crossfade(targetState = uiBMIState.shouldBMICardShow) {
+                if(it) {
+                    Column {
+                        BMIResultCard(
+                            bmi = uiBMIState.bmi,
+                            bmiStage = uiBMIState.bmiStage,
+                            bmiStageColor = when(uiBMIState.bmiStage) {
+                                "Underweight" -> CustomBlue
+                                "Normal" -> CustomGreen
+                                else -> CustomRed
+                            }
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        ShareButton(
+                            onClick = shareButtonClicked
+                        )
+                    }
+                } else {
+                    Divider()
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Row(
+                        modifier = Modifier
+                    ) {
+                        NumberKeyboard(
+                            modifier = Modifier,
+                            onNumberClick = onNumberClicked
+                        )
+                        Column(
+                            modifier = Modifier
+                        ) {
+                            SymbolButton(
+                                symbol = "AC",
+                                onClick = allClearButtonClicked
+                            )
+                            SymbolButtonWithIcon(
+                                onClick = deleteButtonClicked
+                            )
+                            SymbolButton(
+                                symbol = "GO",
+                                onClick = goButtonClicked
+                            )
+                        }
+                    }
                 }
             }
         }
