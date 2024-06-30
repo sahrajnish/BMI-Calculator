@@ -32,6 +32,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -353,10 +354,52 @@ fun ShareButton(
     }
 }
 
+@Composable
+fun BottomSheetContent(
+    sheetTitle: String,
+    sheetItemList: List<String>,
+    onItemClicked: (String) -> Unit,
+    onCancelClicked: () -> Unit
+) {
+    Text(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(10.dp),
+        text = sheetTitle,
+        fontWeight = FontWeight.Bold,
+        textAlign = TextAlign.Center
+    )
+    sheetItemList.forEach { item ->
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onItemClicked(item) }
+        ) {
+            Text(
+                text = item,
+                modifier = Modifier
+                    .padding(15.dp)
+            )
+        }
+    }
+    Button(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(20.dp),
+        onClick = onCancelClicked,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color.LightGray,
+            contentColor = Color.Black
+        )
+    ) {
+        Text(
+            text = "Cancel"
+        )
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 private fun Prev() {
-    ShareButton(
-        onClick = {}
-    )
+    BMIResultCard(bmi = 24.5, bmiStage = "Normal", bmiStageColor = CustomGreen)
 }
